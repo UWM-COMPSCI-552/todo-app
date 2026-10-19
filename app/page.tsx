@@ -1,70 +1,54 @@
-import Image from "next/image";
-import Link from 'next/link';
-import styles from "./page.module.css";
+"use client"
+import { useState } from 'react'; 
+import { Heading, HStack, IconButton, Input, Table, VStack } from '@chakra-ui/react';
+import { Provider } from '@/components/ui/provider';
+import { LuPlus, LuTrash } from 'react-icons/lu';
+
+interface TodoItem {
+  task : string,
+  index : number
+}
 
 export default function Home() {
+  const [newTask, setNewTask ] = useState("");
+  const [ newTaskIndex, setNewTaskIndex ] = useState(0);
+  const [ tasks, setTasks ] = useState<Array<TodoItem>>([]);
+  function addClicked() {
+    console.log('add was clicked', newTask);
+    setTasks([...tasks, {task:newTask, index:newTaskIndex}]);
+    setNewTaskIndex(newTaskIndex+1)
+  }
+  function removeItem(i : number) {
+    setTasks(tasks.toSpliced(i, 1));
+  }
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <Link
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </Link>{" "}
-            or the{" "}
-            <Link
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </Link>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <Link
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </Link>
-          <Link
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </Link>
-        </div>
-      </main>
-    </div>
+    <Provider>
+      <VStack>
+        <Heading>TODO list</Heading>
+        <HStack>
+          <Input value={newTask} onChange={(e) => setNewTask(e.target.value)}>
+          </Input>
+          <IconButton variant='surface' onClick={() => addClicked()}>
+            <LuPlus/>
+          </IconButton>
+        </HStack>
+        <Table.Root>
+          <Table.Body>
+            {
+              tasks.map((s,i) => (
+                <Table.Row> 
+                  <Table.Cell>{s.task}</Table.Cell>
+                  <Table.Cell>
+                    <IconButton variant='surface' onClick={() => removeItem(i)}>
+                      <LuTrash/>
+                    </IconButton>
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            }
+          </Table.Body>
+        </Table.Root>
+      </VStack>
+    </Provider>
   );
 }
