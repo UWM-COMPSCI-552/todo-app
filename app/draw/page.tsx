@@ -5,7 +5,7 @@ import { Stroke } from '@/src/Stroke';
 import { Point } from '@/src/Point';
 import { Rectangle } from '@/src/Rectangle';
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export interface Tool {
     down(p : Point) : void;
@@ -95,20 +95,43 @@ export default function Main() {
     const selectRef = useRef<HTMLSelectElement>(null);
     const colorRef = useRef<HTMLInputElement>(null);
 
-    const canvas = canvasRef.current; 
-    const select = selectRef.current;
-    const color = colorRef.current;
+    const [canvas, setCanvas] = useState<null|HTMLCanvasElement>(null);
+    const [select, setSelect] = useState<null|HTMLSelectElement>(null);
+    const [color, setColor] = useState<null|HTMLInputElement>(null);
+
+    useEffect(() => {
+        setCanvas(canvasRef.current);
+        setSelect(selectRef.current);
+        setColor(colorRef.current);
+    }, [canvasRef, selectRef, colorRef]);
+
+    const [width, setWidth] = useState(500);
+    const [height, setHeight] = useState(300);
+    const [dirty, setDirty] = useState(false);
 
         const ctx : CanvasRenderingContext2D|null = canvas?.getContext("2d") ?? null;
         const drawing : Array<Shape> = [];
 
         const repaint = () => {
+            console.log(`in repaint, ctx = ${ctx}.`);
             if (ctx === null) return;
             ctx.reset();
             for (const st of drawing) {
                 st.draw(ctx);
             }
         }
+
+        useEffect(() => {
+            console.log(`using dirty = ${dirty}`);
+            if (dirty) {
+                setDirty(() => false);
+                repaint();
+            }
+        },[dirty]);
+        useEffect(() => {
+            console.log('setting dirty');
+            setDirty(true);
+        },[width, height, ctx]);
 
         const nullTool : Tool = {
             down(_ : Point) { },
@@ -140,6 +163,7 @@ export default function Main() {
         }
 
         const mouseDown = (e:MouseEvent) => {
+            console.log(`mouse down`);
             const p = getScreenPoint(e);
             tool.down(p);
         };
@@ -151,12 +175,15 @@ export default function Main() {
             }
         }
         const mouseUp = (e:MouseEvent) => {
+            console.log("mouse up");
             const p = getScreenPoint(e);
             tool.up(p);
             repaint();
         }
 
         useEffect(() => {
+            //console.log(`adding listeners to ${canvasRef.current}`);
+            //const canvas = canvasRef.current;
             if (canvas === null) return;
             canvas.addEventListener('mousedown', mouseDown);
             canvas.addEventListener('mousemove', mouseMoved);
@@ -170,13 +197,15 @@ export default function Main() {
         
     
         useLayoutEffect( ()=> {
+            console.log(`useLayout canvas=${canvas}, window = ${window}`);
             if (canvas === null) return;
             if (window === null) return;
             const action = () => {
                 const width = window.innerWidth - MARGIN;
                 const height =  window.innerHeight - MARGIN - TOOLHEIGHT
-                canvas.width = width;
-                canvas.height = height;
+                console.log(`changing wndow size <${width}, ${height}>`)
+                setWidth(width);
+                setHeight(height);
             }
             action();
             window.addEventListener('resize',action);
@@ -187,12 +216,17 @@ export default function Main() {
 
         
        useEffect(() => { 
+        console.log(`adding selection listeners, with select=${select}`);
         if (select === null) return;
         const selected = () => {
             switch (select.value) {
                 default:
                     setTool(nullTool);
-                    console.log("selected null");
+                    console.log("selected null");                                console.log("selected null");
+        console.log("selected null");
+
+                repaint();
+                repaint();
                     break;
                 case "stroke":
                     setTool(strokeTool);
@@ -229,7 +263,7 @@ export default function Main() {
     </select>
     <input type="color" ref={colorRef}/>
     <br/>
-    <canvas ref={canvasRef}></canvas>
+    <canvas ref={canvasRef} width={width} height={height}></canvas>
     </>
     );
 }
