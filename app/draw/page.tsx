@@ -107,7 +107,7 @@ export default function Main() {
 
     const [width, setWidth] = useState(500);
     const [height, setHeight] = useState(300);
-    const [dirty, setDirty] = useState(false);
+    const [dirty, setDirty] = useState(0);
 
         const ctx : CanvasRenderingContext2D|null = canvas?.getContext("2d") ?? null;
         const drawing : Array<Shape> = [];
@@ -123,14 +123,12 @@ export default function Main() {
 
         useEffect(() => {
             console.log(`using dirty = ${dirty}`);
-            if (dirty) {
-                setDirty(() => false);
-                repaint();
-            }
+            repaint();
         },[dirty]);
+
         useEffect(() => {
             console.log('setting dirty');
-            setDirty(true);
+            setDirty(dirty+1);
         },[width, height, ctx]);
 
         const nullTool : Tool = {
