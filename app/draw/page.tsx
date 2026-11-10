@@ -100,15 +100,6 @@ export default function Main() {
     const selectRef = useRef<HTMLSelectElement>(null);
     const colorRef = useRef<HTMLInputElement>(null);
 
-    const [canvas, setCanvas] = useState<null|HTMLCanvasElement>(null);
-    const [select, setSelect] = useState<null|HTMLSelectElement>(null);
-    const [color, setColor] = useState<null|HTMLInputElement>(null);
-
-    useEffect(() => {
-        setCanvas(canvasRef.current);
-        setSelect(selectRef.current);
-        setColor(colorRef.current);
-    }, [canvasRef, selectRef, colorRef]);
 
     const [width, setWidth] = useState(500);
     const [height, setHeight] = useState(300);
@@ -123,6 +114,7 @@ export default function Main() {
             console.log(`in repaint, ctx = ${ctx}.`);
             if (ctx === null) return;
             ctx.reset();
+            console.log(`drawing has ${drawing.length} shapes`);
             for (const st of drawing) {
                 st.draw(ctx);
             }
@@ -170,24 +162,26 @@ export default function Main() {
             return new Point(x, y);
         }, [canvasRef]);
 
-        const mouseDown = (e:MouseEvent) => {
+        const mouseDown = useMemo(()=>(e:MouseEvent) => {
             console.log(`mouse down`);
             const p = getScreenPoint(e);
             tool.down(p);
-        };
-        const mouseMoved = (e:MouseEvent) => {
+        }, [tool]);
+
+        const mouseMoved = useMemo(() => (e:MouseEvent) => {
             const p = getScreenPoint(e);
             const str = drawing[drawing.length-1];
             if (e.buttons == 1) {
                 tool.drag(p);
             }
-        }
-        const mouseUp = (e:MouseEvent) => {
+        }, [tool]);
+
+        const mouseUp = useMemo(() => (e:MouseEvent) => {
             console.log("mouse up");
             const p = getScreenPoint(e);
             tool.up(p);
             repaint();
-        }
+        }, [tool]);
 
         useEffect(() => {
             console.log(`adding listeners to ${canvasRef.current}`);
@@ -201,7 +195,7 @@ export default function Main() {
                 canvas.removeEventListener('mousemove', mouseMoved);
                 canvas.removeEventListener('mouseup', mouseUp);
             }
-        }, [canvasRef]);
+        }, [canvasRef, tool]);
         
     
         useLayoutEffect( ()=> {
