@@ -170,7 +170,6 @@ export default function Main() {
 
         const mouseMoved = useMemo(() => (e:MouseEvent) => {
             const p = getScreenPoint(e);
-            const str = drawing[drawing.length-1];
             if (e.buttons == 1) {
                 tool.drag(p);
             }
