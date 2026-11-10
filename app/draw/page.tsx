@@ -106,118 +106,118 @@ export default function Main() {
     const [dirty, setDirty] = useState(0);
 
 
-        const [drawing,_] = useState<Shape[]>([]);
+    const [drawing, _] = useState<Shape[]>([]);
 
-        const repaint = useMemo(() => () => {
-            const canvas = canvasRef.current;
-            const ctx = getCtx(canvas);
-            console.log(`in repaint, ctx = ${ctx}.`);
-            if (ctx === null) return;
-            ctx.reset();
-            console.log(`drawing has ${drawing.length} shapes`);
-            for (const st of drawing) {
-                st.draw(ctx);
-            }
-        }, [canvasRef, drawing]);
+    const repaint = useMemo(() => () => {
+        const canvas = canvasRef.current;
+        const ctx = getCtx(canvas);
+        console.log(`in repaint, ctx = ${ctx}.`);
+        if (ctx === null) return;
+        ctx.reset();
+        console.log(`drawing has ${drawing.length} shapes`);
+        for (const st of drawing) {
+            st.draw(ctx);
+        }
+    }, [canvasRef, drawing]);
 
-        useEffect(() => {
-            console.log(`using dirty = ${dirty}`);
-            repaint();
-        },[dirty]);
+    useEffect(() => {
+        console.log(`using dirty = ${dirty}`);
+        repaint();
+    }, [dirty]);
 
-        useEffect(() => {
-            console.log('setting dirty');
-            setDirty(dirty+1);
-        },[width, height]);
+    useEffect(() => {
+        console.log('setting dirty');
+        setDirty(dirty + 1);
+    }, [width, height]);
 
-        const nullTool : Tool = {
-            down(_ : Point) { },
-            drag(_ : Point) { },
-            up(_ : Point) {}
-        };
+    const nullTool: Tool = {
+        down(_: Point) { },
+        drag(_: Point) { },
+        up(_: Point) { }
+    };
 
-        const [strokeTool, setStrokeTool] = useState(nullTool);
-        const [rectangleTool, setRectangleTool] = useState(nullTool);
+    const [strokeTool, setStrokeTool] = useState(nullTool);
+    const [rectangleTool, setRectangleTool] = useState(nullTool);
 
-        const [tool, setTool] = useState(nullTool);
+    const [tool, setTool] = useState(nullTool);
 
-        let settings : Settings = { color: "black" };
+    let settings: Settings = { color: "black" };
 
-        useEffect(() => {
-            const canvas = canvasRef.current;
-            console.log('trying to initialize tools');
-            const ctx = getCtx(canvas);
-            if (ctx === null) return;
-            console.log('initializing tools');
-            setStrokeTool(new StrokeTool(drawing, ctx, settings));
-            setRectangleTool(new RectangleTool(drawing, ctx, settings));
-        }, [drawing, canvasRef]);
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        console.log('trying to initialize tools');
+        const ctx = getCtx(canvas);
+        if (ctx === null) return;
+        console.log('initializing tools');
+        setStrokeTool(new StrokeTool(drawing, ctx, settings));
+        setRectangleTool(new RectangleTool(drawing, ctx, settings));
+    }, [drawing, canvasRef]);
 
-        const getScreenPoint = useMemo(() => (e : {clientX : number, clientY : number}) => {
-            const canvas = canvasRef.current;
-            if (canvas === null) return new Point(e.clientX, e.clientY);
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            return new Point(x, y);
-        }, [canvasRef]);
+    const getScreenPoint = useMemo(() => (e: { clientX: number, clientY: number }) => {
+        const canvas = canvasRef.current;
+        if (canvas === null) return new Point(e.clientX, e.clientY);
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        return new Point(x, y);
+    }, [canvasRef]);
 
-        const mouseDown = useMemo(()=>(e:MouseEvent) => {
-            console.log(`mouse down`);
-            const p = getScreenPoint(e);
-            tool.down(p);
-        }, [tool]);
+    const mouseDown = useMemo(() => (e: MouseEvent) => {
+        console.log(`mouse down`);
+        const p = getScreenPoint(e);
+        tool.down(p);
+    }, [tool]);
 
-        const mouseMoved = useMemo(() => (e:MouseEvent) => {
-            const p = getScreenPoint(e);
-            if (e.buttons == 1) {
-                tool.drag(p);
-            }
-        }, [tool]);
+    const mouseMoved = useMemo(() => (e: MouseEvent) => {
+        const p = getScreenPoint(e);
+        if (e.buttons == 1) {
+            tool.drag(p);
+        }
+    }, [tool]);
 
-        const mouseUp = useMemo(() => (e:MouseEvent) => {
-            console.log("mouse up");
-            const p = getScreenPoint(e);
-            tool.up(p);
-            repaint();
-        }, [tool]);
+    const mouseUp = useMemo(() => (e: MouseEvent) => {
+        console.log("mouse up");
+        const p = getScreenPoint(e);
+        tool.up(p);
+        repaint();
+    }, [tool]);
 
-        useEffect(() => {
-            console.log(`adding listeners to ${canvasRef.current}`);
-            const canvas = canvasRef.current;
-            if (canvas === null) return;
-            canvas.addEventListener('mousedown', mouseDown);
-            canvas.addEventListener('mousemove', mouseMoved);
-            canvas.addEventListener('mouseup', mouseUp);
-            return () => {
-                canvas.removeEventListener('mousedown', mouseDown);
-                canvas.removeEventListener('mousemove', mouseMoved);
-                canvas.removeEventListener('mouseup', mouseUp);
-            }
-        }, [canvasRef, tool]);
+    useEffect(() => {
+        console.log(`adding listeners to ${canvasRef.current}`);
+        const canvas = canvasRef.current;
+        if (canvas === null) return;
+        canvas.addEventListener('mousedown', mouseDown);
+        canvas.addEventListener('mousemove', mouseMoved);
+        canvas.addEventListener('mouseup', mouseUp);
+        return () => {
+            canvas.removeEventListener('mousedown', mouseDown);
+            canvas.removeEventListener('mousemove', mouseMoved);
+            canvas.removeEventListener('mouseup', mouseUp);
+        }
+    }, [canvasRef, tool]);
+
+
+    useLayoutEffect(() => {
+        const canvas = canvasRef.current;
+        console.log(`useLayout canvas=${canvas}, window = ${window}`);
+        if (canvas === null) return;
+        if (window === null) return;
+        const action = () => {
+            const width = window.innerWidth - MARGIN;
+            const height = window.innerHeight - MARGIN - TOOLHEIGHT
+            console.log(`changing wndow size <${width}, ${height}>`)
+            setWidth(width);
+            setHeight(height);
+        }
+        action();
+        window.addEventListener('resize', action);
+        return () => {
+            window.removeEventListener('resize', action);
+        }
+    }, [canvasRef]);
+
         
-    
-        useLayoutEffect( ()=> {
-            const canvas = canvasRef.current;
-            console.log(`useLayout canvas=${canvas}, window = ${window}`);
-            if (canvas === null) return;
-            if (window === null) return;
-            const action = () => {
-                const width = window.innerWidth - MARGIN;
-                const height =  window.innerHeight - MARGIN - TOOLHEIGHT
-                console.log(`changing wndow size <${width}, ${height}>`)
-                setWidth(width);
-                setHeight(height);
-            }
-            action();
-            window.addEventListener('resize',action);
-            return () => {
-                window.removeEventListener('resize',action);
-            }
-        },[canvasRef]);
-
-        
-       useEffect(() => { 
+    useEffect(() => { 
         const select = selectRef.current;
         console.log(`adding selection listeners, with select=${select}`);
         if (select === null) return;
