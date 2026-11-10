@@ -6,6 +6,7 @@ import { Point } from '@/src/Point';
 import { Rectangle } from '@/src/Rectangle';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { HooksClientContext } from 'next/dist/server/route-modules/pages/vendored/contexts/entrypoints';
 
 export interface Tool {
     down(p : Point) : void;
@@ -90,6 +91,10 @@ class RectangleTool implements Tool {
 const MARGIN = 24;
 const TOOLHEIGHT = 24;
 
+function getCtx(canvas : null|HTMLCanvasElement) : CanvasRenderingContext2D|null {
+    return canvas?.getContext("2d") ?? null;
+}
+
 export default function Main() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const selectRef = useRef<HTMLSelectElement>(null);
@@ -109,28 +114,19 @@ export default function Main() {
     const [height, setHeight] = useState(300);
     const [dirty, setDirty] = useState(0);
 
-    const [ ctx, setCtx ] = useState<null|CanvasRenderingContext2D>(null);
 
-    useEffect(() => {
-        console.log(`setting ctx, canvas = ${canvas}`);
-        const tempCtx = canvas?.getContext("2d") ?? null;
-        if (tempCtx === null) {
-            console.log("Oh no!  Ctx is null!");
-            return;
-        }
-        setCtx(tempCtx);
-    }, [canvas]);
-
-        const drawing : Array<Shape> = [];
+        const [drawing,_] = useState<Shape[]>([]);
 
         const repaint = useMemo(() => () => {
+            const canvas = canvasRef.current;
+            const ctx = getCtx(canvas);
             console.log(`in repaint, ctx = ${ctx}.`);
             if (ctx === null) return;
             ctx.reset();
             for (const st of drawing) {
                 st.draw(ctx);
             }
-        }, [ctx, drawing]);
+        }, [canvasRef, drawing]);
 
         useEffect(() => {
             console.log(`using dirty = ${dirty}`);
@@ -140,7 +136,7 @@ export default function Main() {
         useEffect(() => {
             console.log('setting dirty');
             setDirty(dirty+1);
-        },[width, height, ctx]);
+        },[width, height]);
 
         const nullTool : Tool = {
             down(_ : Point) { },
@@ -156,20 +152,23 @@ export default function Main() {
         let settings : Settings = { color: "black" };
 
         useEffect(() => {
+            const canvas = canvasRef.current;
             console.log('trying to initialize tools');
+            const ctx = getCtx(canvas);
             if (ctx === null) return;
             console.log('initializing tools');
             setStrokeTool(new StrokeTool(drawing, ctx, settings));
             setRectangleTool(new RectangleTool(drawing, ctx, settings));
-        }, [drawing, ctx]);
+        }, [drawing, canvasRef]);
 
-        function getScreenPoint(e : {clientX : number, clientY : number}) : Point {
-            if (canvas === null) throw new Error("this shouldn't happen");
+        const getScreenPoint = useMemo(() => (e : {clientX : number, clientY : number}) => {
+            const canvas = canvasRef.current;
+            if (canvas === null) return new Point(e.clientX, e.clientY);
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             return new Point(x, y);
-        }
+        }, [canvasRef]);
 
         const mouseDown = (e:MouseEvent) => {
             console.log(`mouse down`);
@@ -191,8 +190,8 @@ export default function Main() {
         }
 
         useEffect(() => {
-            //console.log(`adding listeners to ${canvasRef.current}`);
-            //const canvas = canvasRef.current;
+            console.log(`adding listeners to ${canvasRef.current}`);
+            const canvas = canvasRef.current;
             if (canvas === null) return;
             canvas.addEventListener('mousedown', mouseDown);
             canvas.addEventListener('mousemove', mouseMoved);
@@ -202,10 +201,11 @@ export default function Main() {
                 canvas.removeEventListener('mousemove', mouseMoved);
                 canvas.removeEventListener('mouseup', mouseUp);
             }
-        }, [canvas]);
+        }, [canvasRef]);
         
     
         useLayoutEffect( ()=> {
+            const canvas = canvasRef.current;
             console.log(`useLayout canvas=${canvas}, window = ${window}`);
             if (canvas === null) return;
             if (window === null) return;
@@ -221,10 +221,11 @@ export default function Main() {
             return () => {
                 window.removeEventListener('resize',action);
             }
-        },[canvas]);
+        },[canvasRef]);
 
         
        useEffect(() => { 
+        const select = selectRef.current;
         console.log(`adding selection listeners, with select=${select}`);
         if (select === null) return;
         const selected = () => {
@@ -247,9 +248,10 @@ export default function Main() {
         return () => {
             select.removeEventListener('change', selected);
         }
-    },[select, strokeTool, rectangleTool]);
+    },[selectRef, strokeTool, rectangleTool]);
 
     useEffect(() => {
+        const color = colorRef.current;
         if (color === null) return;
         const changeColor = () => {
             settings.color = color.value; // settings = { ...settings, color:color.value };
@@ -258,7 +260,7 @@ export default function Main() {
         return () => {
             color.removeEventListener('change', changeColor);
         }
-    }, [color]);
+    }, [colorRef]);
 
     return (
         <>
