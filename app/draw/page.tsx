@@ -5,7 +5,7 @@ import { Stroke } from '@/src/Stroke';
 import { Point } from '@/src/Point';
 import { Rectangle } from '@/src/Rectangle';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 export interface Tool {
     down(p : Point) : void;
@@ -109,17 +109,28 @@ export default function Main() {
     const [height, setHeight] = useState(300);
     const [dirty, setDirty] = useState(0);
 
-        const ctx : CanvasRenderingContext2D|null = canvas?.getContext("2d") ?? null;
+    const [ ctx, setCtx ] = useState<null|CanvasRenderingContext2D>(null);
+
+    useEffect(() => {
+        console.log(`setting ctx, canvas = ${canvas}`);
+        const tempCtx = canvas?.getContext("2d") ?? null;
+        if (tempCtx === null) {
+            console.log("Oh no!  Ctx is null!");
+            return;
+        }
+        setCtx(tempCtx);
+    }, [canvas]);
+
         const drawing : Array<Shape> = [];
 
-        const repaint = () => {
+        const repaint = useMemo(() => () => {
             console.log(`in repaint, ctx = ${ctx}.`);
             if (ctx === null) return;
             ctx.reset();
             for (const st of drawing) {
                 st.draw(ctx);
             }
-        }
+        }, [ctx, drawing]);
 
         useEffect(() => {
             console.log(`using dirty = ${dirty}`);
@@ -136,21 +147,21 @@ export default function Main() {
             drag(_ : Point) { },
             up(_ : Point) {}
         };
-        let strokeTool : Tool = nullTool;
-        let rectangleTool : Tool = nullTool;
 
-        let tool : Tool = nullTool;
-        function setTool(t : Tool) {
-            tool = t;
-        }
+        const [strokeTool, setStrokeTool] = useState(nullTool);
+        const [rectangleTool, setRectangleTool] = useState(nullTool);
+
+        const [tool, setTool] = useState(nullTool);
 
         let settings : Settings = { color: "black" };
 
         useEffect(() => {
+            console.log('trying to initialize tools');
             if (ctx === null) return;
-            strokeTool = new StrokeTool(drawing, ctx, settings);
-            rectangleTool = new RectangleTool(drawing, ctx, settings);
-        }, [drawing, ctx, settings]);
+            console.log('initializing tools');
+            setStrokeTool(new StrokeTool(drawing, ctx, settings));
+            setRectangleTool(new RectangleTool(drawing, ctx, settings));
+        }, [drawing, ctx]);
 
         function getScreenPoint(e : {clientX : number, clientY : number}) : Point {
             if (canvas === null) throw new Error("this shouldn't happen");
@@ -220,18 +231,15 @@ export default function Main() {
             switch (select.value) {
                 default:
                     setTool(nullTool);
-                    console.log("selected null");                                console.log("selected null");
-        console.log("selected null");
-
-                repaint();
-                repaint();
+                    console.log("selected null");
                     break;
                 case "stroke":
                     setTool(strokeTool);
+                    console.log('stroke tool compared to null tool = ',strokeTool === nullTool);
                     break;
                 case "rectangle":
                     setTool(rectangleTool);
-                    console.log("Seected rectangle");
+                    console.log("Selected rectangle");
                     break;
             }
         };
@@ -239,7 +247,7 @@ export default function Main() {
         return () => {
             select.removeEventListener('change', selected);
         }
-    },[select]);
+    },[select, strokeTool, rectangleTool]);
 
     useEffect(() => {
         if (color === null) return;
