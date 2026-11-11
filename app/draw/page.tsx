@@ -153,20 +153,21 @@ export default function Main() {
         setRectangleTool(new RectangleTool(drawing, ctx, settings));
     }, [drawing, canvasRef]);
 
-    const getScreenPoint = useMemo(() => (e: { clientX: number, clientY: number }) => {
-        const canvas = canvasRef.current;
-        if (canvas === null) return new Point(e.clientX, e.clientY);
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        return new Point(x, y);
-    }, [canvasRef]);
+    
 
 
     useEffect(() => {
         console.log(`adding listeners to ${canvasRef.current}`);
         const canvas = canvasRef.current;
         if (canvas === null) return;
+
+        function getScreenPoint(e: { clientX: number, clientY: number }) {
+            const rect = canvas!.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            return new Point(x, y);
+        }
+
         function mouseDown (e: MouseEvent) {
             console.log(`mouse down`);
             const p = getScreenPoint(e);
