@@ -162,30 +162,31 @@ export default function Main() {
         return new Point(x, y);
     }, [canvasRef]);
 
-    const mouseDown = useMemo(() => (e: MouseEvent) => {
-        console.log(`mouse down`);
-        const p = getScreenPoint(e);
-        tool.down(p);
-    }, [tool]);
-
-    const mouseMoved = useMemo(() => (e: MouseEvent) => {
-        const p = getScreenPoint(e);
-        if (e.buttons == 1) {
-            tool.drag(p);
-        }
-    }, [tool]);
-
-    const mouseUp = useMemo(() => (e: MouseEvent) => {
-        console.log("mouse up");
-        const p = getScreenPoint(e);
-        tool.up(p);
-        repaint();
-    }, [tool]);
 
     useEffect(() => {
         console.log(`adding listeners to ${canvasRef.current}`);
         const canvas = canvasRef.current;
         if (canvas === null) return;
+        function mouseDown (e: MouseEvent) {
+            console.log(`mouse down`);
+            const p = getScreenPoint(e);
+            tool.down(p);
+        }
+
+        function mouseMoved(e: MouseEvent) {
+            const p = getScreenPoint(e);
+            if (e.buttons == 1) {
+                tool.drag(p);
+            }
+        }
+
+        function mouseUp(e: MouseEvent) {
+            console.log("mouse up");
+            const p = getScreenPoint(e);
+            tool.up(p);
+            repaint();
+        }
+
         canvas.addEventListener('mousedown', mouseDown);
         canvas.addEventListener('mousemove', mouseMoved);
         canvas.addEventListener('mouseup', mouseUp);
