@@ -91,10 +91,12 @@ class SelectTool implements Tool {
     private drawing : Drawing;
     private ctx : CanvasRenderingContext2D;
     private initial : Point = new Point(0,0);
+    private setSelected : (ss:Shape[]) => void;
     private settings : Settings;
 
-    constructor(drawing : Drawing, ctx : CanvasRenderingContext2D, settings : Settings) {
+    constructor(drawing : Drawing, setSelected : (ss:Shape[])=>void, ctx : CanvasRenderingContext2D, settings : Settings) {
         this.drawing = drawing;
+        this.setSelected = setSelected;
         this.ctx = ctx;
         this.settings = settings;
     }
@@ -114,7 +116,14 @@ class SelectTool implements Tool {
     }
 
     up(p: Point): void {
+        const x = this.initial.getX();
+        const y = this.initial.getY();
         // TODO: select shapes
+        const center = new Point((x+p.getX())/2, (y+p.getY())/2);
+        const width = (Math.abs(x-p.getX()));
+        const height = (Math.abs(y - p.getY()));
+        const rect = {center:{x:center.getX(), y:center.getY()}, width, height};
+        this.setSelected(this.drawing.filter((sh) => sh.overlaps(rect)));
     }
 
 }
@@ -137,6 +146,7 @@ export default function Main() {
 
 
     const [drawing, _] = useState<Shape[]>([]);
+    const [selected, setSelected] = useState<Shape[]>([]);
 
     const repaint = useMemo(() => () => {
         const canvas = canvasRef.current;
@@ -146,9 +156,9 @@ export default function Main() {
         ctx.reset();
         console.log(`drawing has ${drawing.length} shapes`);
         for (const st of drawing) {
-            st.draw(ctx);
+            st.draw(ctx,selected.includes(st));
         }
-    }, [canvasRef, drawing]);
+    }, [canvasRef, drawing, selected]);
 
     useEffect(() => {
         console.log(`using dirty = ${dirty}`);
@@ -182,7 +192,7 @@ export default function Main() {
         console.log('initializing tools');
         setStrokeTool(new StrokeTool(drawing, ctx, settings));
         setRectangleTool(new RectangleTool(drawing, ctx, settings));
-        setSelectTool(new SelectTool(drawing, ctx, settings));
+        setSelectTool(new SelectTool(drawing, setSelected, ctx, settings));
     }, [drawing, canvasRef]);
 
     

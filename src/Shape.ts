@@ -3,10 +3,17 @@ export interface Delta {
     dy : number;
 }
 
+export interface Rect {
+    center : {x:number, y:number};
+    width : number;
+    height : number;
+}
+
 export interface Shape {
-    draw : (ctx:CanvasRenderingContext2D) => void;
+    draw : (ctx:CanvasRenderingContext2D, selected?:boolean) => void;
     move : (delta : Delta) => void;
     setStroke : (color:string) => void;
+    overlaps : (r:Rect) => boolean;
 }
 
 export
@@ -36,9 +43,9 @@ export class Group extends AbstractShape {
         }
     }
 
-    override draw(ctx:CanvasRenderingContext2D) : void {
+    override draw(ctx:CanvasRenderingContext2D, selected?:boolean) : void {
         for (const sh of this.shapes) {
-            sh.draw(ctx);
+            sh.draw(ctx,selected);
         }
     }
 }
