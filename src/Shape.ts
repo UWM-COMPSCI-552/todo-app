@@ -21,6 +21,7 @@ abstract class AbstractShape implements Shape {
     abstract setStroke(color:string) : void;
     abstract draw(ctx:CanvasRenderingContext2D) : void;
     abstract move(delta:Delta) : void;
+    abstract overlaps(r:Rect) : boolean;
 }
 
 export class Group extends AbstractShape {
@@ -47,5 +48,12 @@ export class Group extends AbstractShape {
         for (const sh of this.shapes) {
             sh.draw(ctx,selected);
         }
+    }
+
+    override overlaps(r: Rect): boolean {
+        for (const sh of this.shapes) {
+            if (sh.overlaps(r)) return true;
+        }
+        return false;
     }
 }

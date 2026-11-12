@@ -1,5 +1,5 @@
 import { Point } from './Point';
-import { Delta, Shape } from './Shape';
+import { Delta, Rect, Shape } from './Shape';
 // import { writeFile } from 'node:fs/promises';
 
 /**
@@ -102,5 +102,19 @@ export class Stroke implements Shape {
         }
         ctx.strokeStyle = this.color;
         ctx.stroke();
+    }
+
+    public overlaps(r : Rect) : boolean {
+        const lox = r.center.x - r.width/2;
+        const hix = r.center.x + r.width/2;
+        const loy = r.center.y - r.height/2;
+        const hiy = r.center.y + r.height/2;
+        function inRange(lo : number, hi : number, n : number) {
+            return lo <= n && n <= hi;
+        }
+        for (const pt of this.pointsArray) {
+            if (inRange(lox,hix,pt.getX()) && inRange(loy,hiy,pt.getY())) return true;
+        }
+        return false;
     }
 }
