@@ -6,7 +6,6 @@ import { Point } from '@/src/Point';
 import { Rectangle } from '@/src/Rectangle';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { HooksClientContext } from 'next/dist/server/route-modules/pages/vendored/contexts/entrypoints';
 
 export interface Tool {
     down(p : Point) : void;
@@ -88,6 +87,37 @@ class RectangleTool implements Tool {
     }
 }
 
+class SelectTool implements Tool {
+    private drawing : Drawing;
+    private ctx : CanvasRenderingContext2D;
+    private initial : Point = new Point(0,0);
+    private settings : Settings;
+
+    constructor(drawing : Drawing, ctx : CanvasRenderingContext2D, settings : Settings) {
+        this.drawing = drawing;
+        this.ctx = ctx;
+        this.settings = settings;
+    }
+
+    down(p: Point): void {
+        console.log("select mouse down");
+        this.initial = p;
+    }
+
+    drag(p: Point): void {
+        this.ctx.strokeStyle = "black";
+        this.ctx.setLineDash([2,2,1,3]);
+        const x = this.initial.getX();
+        const y = this.initial.getY();
+        this.ctx.strokeRect(x, y, p.getX()-x, p.getY()-y);
+        this.ctx.setLineDash([]);
+    }
+
+    up(p: Point): void {
+        // TODO: select shapes
+    }
+
+}
 const MARGIN = 24;
 const TOOLHEIGHT = 24;
 
@@ -138,6 +168,7 @@ export default function Main() {
 
     const [strokeTool, setStrokeTool] = useState(nullTool);
     const [rectangleTool, setRectangleTool] = useState(nullTool);
+    const [selectTool, setSelectTool] = useState(nullTool);
 
     const [tool, setTool] = useState(nullTool);
 
@@ -151,6 +182,7 @@ export default function Main() {
         console.log('initializing tools');
         setStrokeTool(new StrokeTool(drawing, ctx, settings));
         setRectangleTool(new RectangleTool(drawing, ctx, settings));
+        setSelectTool(new SelectTool(drawing, ctx, settings));
     }, [drawing, canvasRef]);
 
     
@@ -237,13 +269,17 @@ export default function Main() {
                     setTool(rectangleTool);
                     console.log("Selected rectangle");
                     break;
+                case "select":
+                    setTool(selectTool);
+                    console.log("Selected select");
+                    break;
             }
         };
         select.addEventListener('change', selected);
         return () => {
             select.removeEventListener('change', selected);
         }
-    },[selectRef, strokeTool, rectangleTool]);
+    },[selectRef, strokeTool, rectangleTool, selectTool]);
 
     useEffect(() => {
         const color = colorRef.current;
@@ -261,6 +297,7 @@ export default function Main() {
         <>
         <select ref={selectRef}>
       <option value="">Select a drawing tool</option>
+      <option value="select">Select</option>
       <option value="stroke">Stroke</option>
       <option value="rectangle">Rectangle</option>
     </select>
