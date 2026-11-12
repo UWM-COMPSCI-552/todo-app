@@ -9,6 +9,8 @@ export interface Rect {
     height : number;
 }
 
+export const SELECT_RADIUS = 2;
+
 export interface Shape {
     draw : (ctx:CanvasRenderingContext2D, selected?:boolean) => void;
     move : (delta : Delta) => void;

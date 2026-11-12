@@ -1,5 +1,5 @@
 import { Point } from './Point';
-import { Delta, Rect, Shape } from './Shape';
+import { Delta, Rect, SELECT_RADIUS, Shape } from './Shape';
 // import { writeFile } from 'node:fs/promises';
 
 /**
@@ -95,10 +95,18 @@ export class Stroke implements Shape {
         }
     }*/
 
-    public draw(ctx: CanvasRenderingContext2D) : void {
+
+    public draw(ctx: CanvasRenderingContext2D, selected?:boolean) : void {
         ctx.beginPath();
         for (const pt of this.pointsArray) {
-            ctx.lineTo(pt.getX(), pt.getY());
+            const x = pt.getX();
+            const y = pt.getY();
+            ctx.lineTo(x, y);
+            if (selected) {
+                ctx.moveTo(x+SELECT_RADIUS, y);
+                ctx.arc(x,y,SELECT_RADIUS,0,2*Math.PI);
+                ctx.moveTo(x,y);
+            }
         }
         ctx.strokeStyle = this.color;
         ctx.stroke();

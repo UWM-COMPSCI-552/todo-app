@@ -1,5 +1,5 @@
 import { Point } from './Point';
-import { AbstractShape, Delta, Rect } from './Shape';
+import { AbstractShape, Delta, Rect, SELECT_RADIUS } from './Shape';
 
 abstract class DefaultShape extends AbstractShape {
 
@@ -48,11 +48,26 @@ export class Rectangle extends DefaultShape {
     
     
 
-    override draw(ctx: CanvasRenderingContext2D): void {
+    override draw(ctx: CanvasRenderingContext2D, selected?:boolean): void {
         super.draw(ctx);
-        const upperLeftX = this.center.getX() - this.width/2;
-        const upperLeftY = this.center.getY() - this.height/2;
-        ctx.strokeRect(upperLeftX,upperLeftY,this.width,this.height)
+        const cx = this.center.getX();
+        const cy = this.center.getY();
+        const left = cx - this.width/2;
+        const top = cy - this.height/2;
+        ctx.strokeRect(left,top,this.width,this.height);
+        if (selected) {
+            const right = cx + this.width/2;
+            const bottom = cy + this.height/2; 
+            ctx.beginPath();
+            ctx.arc(left,top,SELECT_RADIUS,0,2*Math.PI);
+            ctx.moveTo(left+SELECT_RADIUS,bottom);
+            ctx.arc(left,bottom,SELECT_RADIUS,0,2*Math.PI);
+            ctx.moveTo(right+SELECT_RADIUS,bottom);
+            ctx.arc(right,bottom,SELECT_RADIUS,0,2*Math.PI);
+            ctx.moveTo(right+SELECT_RADIUS,top);
+            ctx.arc(right,top,SELECT_RADIUS,0,2*Math.PI);
+            ctx.stroke();
+        }
     }
 
     override overlaps(r : Rect): boolean {
