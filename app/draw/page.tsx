@@ -19,17 +19,17 @@ interface Settings {
     color : string;
 }
 
-type SetSelected = (_: Shape[]) => void;
+type SetShapeArray = ((_: Shape[]) => void) & ((_: (_:Shape[]) => Shape[]) => void);
 
 class StrokeTool implements Tool {
     private str : Stroke = new Stroke();
-    private drawing : Drawing;
-    private setSelected : SetSelected;
+    private setDrawing : SetShapeArray;
+    private setSelected : SetShapeArray;
     private ctx : CanvasRenderingContext2D;
     private settings : Settings;
 
-    constructor(drawing : Drawing, setSelected : SetSelected, ctx : CanvasRenderingContext2D, settings : Settings) {
-        this.drawing = drawing;
+    constructor(setDrawing : SetShapeArray, setSelected : SetShapeArray, ctx : CanvasRenderingContext2D, settings : Settings) {
+        this.setDrawing = setDrawing;
         this.setSelected = setSelected;
         this.ctx = ctx;
         this.settings = settings;
@@ -38,7 +38,6 @@ class StrokeTool implements Tool {
     down(p : Point) {
         this.str = new Stroke(this.settings.color);
         this.str.add(p);
-        this.drawing.push(this.str);
         this.ctx.strokeStyle = this.settings.color;
         this.ctx.beginPath();
         this.ctx.moveTo(p.getX(), p.getY());
@@ -57,19 +56,20 @@ class StrokeTool implements Tool {
         this.ctx.lineTo(p.getX(), p.getY());
         this.ctx.stroke();
         this.setSelected([this.str]);
+        this.setDrawing((drawing)=>[...drawing, this.str]);
     }
 }
 
 class RectangleTool implements Tool {
     private str : Rectangle = new Rectangle(new Point(0,0),0,0,"black");
-    private drawing : Drawing;
-    private setSelected : SetSelected;
+    private setDrawing : SetShapeArray;
+    private setSelected : SetShapeArray;
     private ctx : CanvasRenderingContext2D;
     private initial : Point = new Point(0,0);
     private settings : Settings;
 
-    constructor(drawing : Drawing, setSelected : SetSelected, ctx : CanvasRenderingContext2D, settings : Settings) {
-        this.drawing = drawing;
+    constructor(setDrawing: SetShapeArray, setSelected : SetShapeArray, ctx : CanvasRenderingContext2D, settings : Settings) {
+        this.setDrawing = setDrawing;
         this.setSelected = setSelected;
         this.ctx = ctx;
         this.settings = settings;
@@ -77,7 +77,6 @@ class RectangleTool implements Tool {
     
     down(p : Point) {
         this.str = new Rectangle(p,0,0,this.settings.color);
-        this.drawing.push(this.str);
         this.str.draw(this.ctx);
         this.initial = p;
     }
@@ -91,6 +90,7 @@ class RectangleTool implements Tool {
 
     up(p : Point) {
         this.setSelected([this.str]);
+        this.setDrawing((drawing) => [...drawing,this.str]);
     }
 }
 
@@ -152,7 +152,7 @@ export default function Main() {
     const [dirty, setDirty] = useState(0);
 
 
-    const [drawing, _] = useState<Shape[]>([]);
+    const [drawing, setDrawing] = useState<Shape[]>([]);
     const [selected, setSelected] = useState<Shape[]>([]);
 
     const repaint = useMemo(() => () => {
@@ -197,8 +197,8 @@ export default function Main() {
         const ctx = getCtx(canvas);
         if (ctx === null) return;
         console.log('initializing tools');
-        setStrokeTool(new StrokeTool(drawing, setSelected, ctx, settings));
-        setRectangleTool(new RectangleTool(drawing, setSelected, ctx, settings));
+        setStrokeTool(new StrokeTool(setDrawing, setSelected, ctx, settings));
+        setRectangleTool(new RectangleTool(setDrawing, setSelected, ctx, settings));
         setSelectTool(new SelectTool(drawing, setSelected, ctx, settings));
     }, [drawing, canvasRef]);
 
