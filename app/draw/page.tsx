@@ -192,7 +192,7 @@ export default function Main() {
 
     const [tool, setTool] = useState(nullTool);
 
-    let settings: Settings = { color: "black" };
+    const [settings, setSettings] = useState<Settings>( { color: "black" });
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -203,7 +203,7 @@ export default function Main() {
         setStrokeTool(new StrokeTool(setDrawing, setSelected, ctx, settings));
         setRectangleTool(new RectangleTool(setDrawing, setSelected, ctx, settings));
         setSelectTool(new SelectTool(drawing, setSelected, ctx, settings));
-    }, [drawing, canvasRef]);
+    }, [drawing, settings, canvasRef]);
 
     
 
@@ -295,6 +295,7 @@ export default function Main() {
                     break;
             }
         };
+        selected();
         select.addEventListener('change', selected);
         return () => {
             select.removeEventListener('change', selected);
@@ -305,8 +306,9 @@ export default function Main() {
         const color = colorRef.current;
         if (color === null) return;
         const changeColor = () => {
-            settings.color = color.value; // settings = { ...settings, color:color.value };
+            setSettings({ ...settings, color:color.value });
         }
+        changeColor();
         color.addEventListener('change', changeColor);
         return () => {
             color.removeEventListener('change', changeColor);
