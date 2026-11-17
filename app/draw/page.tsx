@@ -310,6 +310,11 @@ export default function Main() {
         }
     }, [colorRef]);
 
+    const [id, setID] = useState<string>('');
+    function doSave() {
+        console.log('saving');
+
+    }
     return (
         <>
         <select ref={selectRef}>
@@ -319,6 +324,7 @@ export default function Main() {
       <option value="rectangle">Rectangle</option>
     </select>
     <input type="color" ref={colorRef}/>
+    <button onClick={doSave}>Save</button>
     <br/>
     <canvas ref={canvasRef} width={width} height={height}></canvas>
     </>
