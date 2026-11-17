@@ -7,6 +7,9 @@ import { Rectangle } from '@/src/Rectangle';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { Button, HStack, NativeSelect, VStack } from '@chakra-ui/react';
+import { Provider } from '@/components/ui/provider';
+
 export interface Tool {
     down(p : Point) : void;
     drag(p : Point) : void;
@@ -316,17 +319,22 @@ export default function Main() {
 
     }
     return (
-        <>
-        <select ref={selectRef}>
-      <option value="">Select a drawing tool</option>
-      <option value="select">Select</option>
-      <option value="stroke">Stroke</option>
-      <option value="rectangle">Rectangle</option>
-    </select>
-    <input type="color" ref={colorRef}/>
-    <button onClick={doSave}>Save</button>
-    <br/>
-    <canvas ref={canvasRef} width={width} height={height}></canvas>
-    </>
+    <Provider>
+        <VStack>
+            <HStack>
+                <NativeSelect.Root>
+                    <NativeSelect.Field placeholder="Select a drawing tool" ref={selectRef}>
+                        <option value="select">Select</option>
+                        <option value="stroke">Stroke</option>
+                        <option value="rectangle">Rectangle</option>
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                </NativeSelect.Root>
+                <input type="color" ref={colorRef}/>
+                <Button onClick={doSave}>Save</Button>
+            </HStack>
+            <canvas ref={canvasRef} width={width} height={height}></canvas>
+        </VStack>
+    </Provider>
     );
 }
