@@ -19,14 +19,18 @@ interface Settings {
     color : string;
 }
 
+type SetSelected = (_: Shape[]) => void;
+
 class StrokeTool implements Tool {
     private str : Stroke = new Stroke();
     private drawing : Drawing;
+    private setSelected : SetSelected;
     private ctx : CanvasRenderingContext2D;
     private settings : Settings;
 
-    constructor(drawing : Drawing, ctx : CanvasRenderingContext2D, settings : Settings) {
+    constructor(drawing : Drawing, setSelected : SetSelected, ctx : CanvasRenderingContext2D, settings : Settings) {
         this.drawing = drawing;
+        this.setSelected = setSelected;
         this.ctx = ctx;
         this.settings = settings;
     }
@@ -52,18 +56,21 @@ class StrokeTool implements Tool {
         // this.ctx.closePath();
         this.ctx.lineTo(p.getX(), p.getY());
         this.ctx.stroke();
+        this.setSelected([this.str]);
     }
 }
 
 class RectangleTool implements Tool {
     private str : Rectangle = new Rectangle(new Point(0,0),0,0,"black");
     private drawing : Drawing;
+    private setSelected : SetSelected;
     private ctx : CanvasRenderingContext2D;
     private initial : Point = new Point(0,0);
     private settings : Settings;
 
-    constructor(drawing : Drawing, ctx : CanvasRenderingContext2D, settings : Settings) {
+    constructor(drawing : Drawing, setSelected : SetSelected, ctx : CanvasRenderingContext2D, settings : Settings) {
         this.drawing = drawing;
+        this.setSelected = setSelected;
         this.ctx = ctx;
         this.settings = settings;
     }
@@ -83,7 +90,7 @@ class RectangleTool implements Tool {
     }
 
     up(p : Point) {
-        // nothing
+        this.setSelected([this.str]);
     }
 }
 
@@ -154,7 +161,7 @@ export default function Main() {
         console.log(`in repaint, ctx = ${ctx}.`);
         if (ctx === null) return;
         ctx.reset();
-        console.log(`drawing has ${drawing.length} shapes`);
+        console.log(`drawing has ${drawing.length} shapes; selected has ${selected.length} shapes`);
         for (const st of drawing) {
             st.draw(ctx,selected.includes(st));
         }
@@ -190,8 +197,8 @@ export default function Main() {
         const ctx = getCtx(canvas);
         if (ctx === null) return;
         console.log('initializing tools');
-        setStrokeTool(new StrokeTool(drawing, ctx, settings));
-        setRectangleTool(new RectangleTool(drawing, ctx, settings));
+        setStrokeTool(new StrokeTool(drawing, setSelected, ctx, settings));
+        setRectangleTool(new RectangleTool(drawing, setSelected, ctx, settings));
         setSelectTool(new SelectTool(drawing, setSelected, ctx, settings));
     }, [drawing, canvasRef]);
 
@@ -227,7 +234,7 @@ export default function Main() {
             console.log("mouse up");
             const p = getScreenPoint(e);
             tool.up(p);
-            repaint();
+            setDirty(dirty+1);
         }
 
         canvas.addEventListener('mousedown', mouseDown);
@@ -238,7 +245,7 @@ export default function Main() {
             canvas.removeEventListener('mousemove', mouseMoved);
             canvas.removeEventListener('mouseup', mouseUp);
         }
-    }, [canvasRef, tool]);
+    }, [canvasRef, tool, dirty]);
 
 
     useLayoutEffect(() => {
