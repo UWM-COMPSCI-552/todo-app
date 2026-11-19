@@ -125,4 +125,6 @@ export class Stroke implements Shape {
         }
         return false;
     }
+
+    fromJSON(props : object) {}
 }

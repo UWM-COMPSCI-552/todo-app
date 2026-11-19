@@ -1,5 +1,5 @@
 import { Point } from './Point';
-import { AbstractShape, Delta, Rect, SELECT_RADIUS } from './Shape';
+import { AbstractShape, Delta, Rect, SELECT_RADIUS, ShapeFactory } from './Shape';
 
 abstract class DefaultShape extends AbstractShape {
 
@@ -27,12 +27,25 @@ abstract class DefaultShape extends AbstractShape {
     public draw(ctx : CanvasRenderingContext2D) : void {
         ctx.strokeStyle = this.strokeColor;
     }
+
+    public toJSON() : { class: string, center : object, stroke: string } {
+        return { class: this.constructor.name, center: this.center.toJSON, stroke: this.strokeColor };
+    }
+
+    override fromJSON (props : object) {
+        if ("center" in props) {
+            this.center = Point.fromJSON(props.center);
+        }
+        if ("stroke" in props && typeof props.stroke === "string") {
+            this.strokeColor = props.stroke;
+        }
+    }
 }
 export class Rectangle extends DefaultShape {
     private width : number;
     private height : number;
 
-    constructor (center : Point, width : number, height : number, color : string) {
+    constructor (center = new Point(0,0), width = 0, height = 0, color = "black") {
         super(center, color);
         this.width = width;
         this.height = height;
@@ -82,4 +95,17 @@ export class Rectangle extends DefaultShape {
             oneDOverlap(cy1-this.height/2,cy1+r.height/2,cy2-r.height/2,cy2+r.height/2);
     }
 
+    override toJSON() {
+        return {...super.toJSON(), width:this.width, height:this.height};
+    }
+
+    override fromJSON(props : object) {
+        if ("width" in props && typeof props.width === "number") {
+            this.width = props.width;
+        }
+        if ("height" in props && typeof props.height === "number") {
+            this.height = props.height;
+        }
+    }
 }
+ShapeFactory.register({ className : "Rectangle", create: () => new Rectangle()})
