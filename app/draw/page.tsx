@@ -7,7 +7,7 @@ import { Rectangle } from '@/src/Rectangle';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { Button, HStack, NativeSelect, VStack } from '@chakra-ui/react';
+import { Button, HStack, NativeSelect, Text, VStack } from '@chakra-ui/react';
 import { Provider } from '@/components/ui/provider';
 
 export interface Tool {
@@ -316,14 +316,33 @@ export default function Main() {
     }, [colorRef]);
 
     const [id, setID] = useState<string>('');
-    function doSave() {
+    async function doSave() {
         console.log('saving');
-
+        if (id === "") {
+            try {
+                const response = await fetch('api/draw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(drawing),
+                });
+                const result = await response.json() as unknown;
+                if (typeof result === "object" && result !== null && "id" in result && typeof result.id === "string") {
+                    setID(result.id);
+                } else {
+                    console.error("didn't get id", result);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
     }
     return (
     <Provider>
         <VStack>
             <HStack>
+                <Text> {id} </Text>
                 <NativeSelect.Root>
                     <NativeSelect.Field placeholder="Select a drawing tool" ref={selectRef}>
                         <option value="select">Select</option>
