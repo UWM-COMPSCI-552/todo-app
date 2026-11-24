@@ -1,7 +1,7 @@
 'use server';
 
-export async function PUT(r:Request, props : Promise<{id:string}>) {
-    const { id } = (await props);
+export async function PUT(r:Request, props : { params: Promise<{id:string}>}) {
+    const { id } = (await props.params);
     console.log(`PUT happened with ${id}`);
     
     return new Response('Unimplemented',
