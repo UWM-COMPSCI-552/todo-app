@@ -9,6 +9,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, HStack, NativeSelect, Text, VStack } from '@chakra-ui/react';
 import { Provider } from '@/components/ui/provider';
+import { Toaster, toaster } from '@/src/components/ui/toaster';
 
 export interface Tool {
     down(p : Point) : void;
@@ -315,26 +316,54 @@ export default function Main() {
         }
     }, [colorRef]);
 
+    function errorMessage(msg : string) {
+        toaster.create({
+            title: 'Error',
+            description: msg,
+            type: 'error'
+        });
+    }
+
     const [id, setID] = useState<string>('');
     async function doSave() {
         console.log('saving');
         if (id === "") {
             try {
-                const response = await fetch('api/draw', {
+                const response = await fetch('/api/draw', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(drawing),
                 });
-                const result = await response.json() as unknown;
-                if (typeof result === "object" && result !== null && "id" in result && typeof result.id === "string") {
-                    setID(result.id);
+                if (response.ok) {
+                    const result = await response.json() as unknown;
+                    if (typeof result === "object" && result !== null && "id" in result && typeof result.id === "string") {
+                        setID(result.id);
+                    } else {
+                        console.error("didn't get id", result);
+                    }
                 } else {
-                    console.error("didn't get id", result);
+                    errorMessage('Could not save');
                 }
             } catch (error) {
                 console.error(error);
+            }
+        } else {
+            // PUT
+            try {
+                const response = await fetch(`/api/draw/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(drawing),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (!response.ok) {
+                    errorMessage(await response.text());
+                }
+            } catch { 
+
             }
         }
     }
@@ -356,6 +385,7 @@ export default function Main() {
             </HStack>
             <canvas ref={canvasRef} width={width} height={height}></canvas>
         </VStack>
+        <Toaster/>
     </Provider>
     );
 }

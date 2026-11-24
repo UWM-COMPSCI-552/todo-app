@@ -43,7 +43,7 @@ export abstract class ShapeFactory {
                 return result;
             }
         }
-        throw new Error("bad JSON");
+        throw new Error(`bad JSON: ${JSON.stringify(json)}`);
     }
 }
 
